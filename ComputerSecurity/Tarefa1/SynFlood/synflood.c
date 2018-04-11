@@ -5,7 +5,7 @@
 #include <netinet/tcp.h>
 
 // Packet length
-#define PCKT_LEN 8192
+#define TAMANHO_PACOTE 8192
 
 struct ipheader 
 {
@@ -48,7 +48,6 @@ struct tcpheader
  unsigned short int tcph_urgptr;
 };
 
-// Simple checksum function, may use others such as Cyclic Redundancy Check, CRC
 unsigned short csum(unsigned short *buf, int len)
 {
 	unsigned long sum;
@@ -68,7 +67,8 @@ int main(int argc, char *argv[])
 {
 
 int sd;
-char buffer[PCKT_LEN];
+char buffer[TAMANHO_PACOTE];
+srand( (unsigned)time(NULL) );
 
 struct ipheader *ip = (struct ipheader *) buffer;
 struct tcpheader *tcp = (struct tcpheader *) (buffer + sizeof(struct ipheader));
@@ -77,13 +77,11 @@ struct sockaddr_in sin, din;
 int one = 1;
 const int *val = &one;
 
-memset(buffer, 0, PCKT_LEN);
+memset(buffer, 0, TAMANHO_PACOTE);
 
 if(argc != 5)
 {
-	printf("- Invalid parameters!!!\n");
-
-	printf("- Usage: %s <source hostname/IP> <source port> <target hostname/IP> <target port>\n", argv[0]);
+	printf("- Usage: %s <IP-Origem> <Port-Origem> <IP-Destino> <Porta-Destino>\n", argv[0]);
 	exit(-1);
 }
 
@@ -94,24 +92,16 @@ if(sd < 0)
    perror("socket() error");
    exit(-1);
 }
-else
-{
-	printf("socket()-SOCK_RAW and tcp protocol is OK.\n");
-]
  
 sin.sin_family = AF_INET;
 din.sin_family = AF_INET;
 
-// Source port, can be any, modify as needed
 sin.sin_port = htons(atoi(argv[2]));
 din.sin_port = htons(atoi(argv[4]));
-
-// Source IP, can be any, modify as needed
 
 sin.sin_addr.s_addr = inet_addr(argv[1]);
 din.sin_addr.s_addr = inet_addr(argv[3]);
 
-// IP structure
 ip->iph_ihl = 5;
 ip->iph_ver = 4;
 ip->iph_tos = 16;
@@ -119,20 +109,12 @@ ip->iph_len = sizeof(struct ipheader) + sizeof(struct tcpheader);
 ip->iph_ident = htons(54321);
 ip->iph_offset = 0;
 ip->iph_ttl = 64;
-ip->iph_protocol = 6; // TCP
-ip->iph_chksum = 0; // Done by kernel
-
-
-// Source IP, modify as needed, spoofed, we accept through command line argument
+ip->iph_protocol = 6; 
+ip->iph_chksum = 0; 
 ip->iph_sourceip = inet_addr(argv[1]);
-
-// Destination IP, modify as needed, but here we accept through command line argument
 ip->iph_destip = inet_addr(argv[3]);
-
-// The TCP structure. The source port, spoofed, we accept through the command line
 tcp->tcph_srcport = htons(atoi(argv[2]));
 
-// The destination port, we accept through command line
 tcp->tcph_destport = htons(atoi(argv[4]));
 tcp->tcph_seqnum = htonl(1);
 tcp->tcph_acknum = 0;
@@ -140,45 +122,28 @@ tcp->tcph_offset = 5;
 tcp->tcph_syn = 1;
 tcp->tcph_ack = 0;
 tcp->tcph_win = htons(32767);
-tcp->tcph_chksum = 0; // Done by kernel
+tcp->tcph_chksum = 0; 
 tcp->tcph_urgptr = 0;
 
-// IP checksum calculation
 ip->iph_chksum = csum((unsigned short *) buffer, (sizeof(struct ipheader) + sizeof(struct tcpheader)));
 
-
-// Inform the kernel do not fill up the headers' structure, we fabricated our own
-
 if(setsockopt(sd, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
-
 {
-    perror("setsockopt() error");
+    perror("Erro Socket");
     exit(-1);
 }
 
-else
+unsigned int i;
 
-   printf("setsockopt() is OK\n");
-
- 
-
-printf("Using:::::Source IP: %s port: %u, Target IP: %s port: %u.\n", argv[1], atoi(argv[2]), argv[3], atoi(argv[4]));
-
-unsigned int count;
-
-for(count = 0; count < 20; count++)
+for(i = 0; i < 20; i++)
 {
-
+	tcp->tcph_destport = htons(rand()%100000); // Generate random ips
 	if(sendto(sd, buffer, ip->iph_len, 0, (struct sockaddr *)&sin, sizeof(sin)) < 0)
 	{
-	   perror("sendto() error");
+	   perror("Erro em sendto()");
 	   exit(-1);
 	}
-	else
-	{	
-	   printf("Count #%u - sendto() is OK\n", count);
-	}
-	sleep(2);
+	sleep(5);
 }
 
 close(sd);
