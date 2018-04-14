@@ -2,79 +2,71 @@ package util.encryptor;
 
 public class SimpleDescriptor 
 {
-        Permutator permutator = new Permutator();
-        public static int START_INDEX_SUBSTRING_RIGHT = 4;
-	    public static int END_INDEX_SUBSTRING_RIGHT = 8;
-	    public static int START_INDEX_SUBSTRING_LEFT = 0;
-	    public static int END_INDEX_SUBSTRING_LEFT = 4;
-	    
-	    
-	    public String decrypt(String pString, String pKey1, String pKey2)
+    private final int DIREITA = 4;
+    private final int DIREITA_FINAL = 8;
+    private final int ESQUERDA = 0;
+    private final int ESQUERDA_FINAL = 4;
+
+        Permutador permutador = new Permutador();
+
+public String decriptar(String pString, String pKey1, String pKey2)
 	    {
-	        String stringPermuted = permutator.ip(pString);
-	        String processedRightSide = processRightSide(stringPermuted, pKey2);
-	        String processedLeftSide = processLeftSide(stringPermuted, processedRightSide);
+	        String permutar = permutador.ip(pString);
+	        String processarDireita = processarLadoDireito(permutar, pKey2);
+	        String processarEsquerda = processarLadoEsquerdo(permutar, processarDireita);
+
+            String primeiro = permutador.trocarPosicao(processarEsquerda);
+
+	        String processarDireita2 = processarLadoDireito(primeiro, pKey1);
+	        String processarEsquerda2 = processarLadoEsquerdo(primeiro, processarDireita2);
 	        
-	        String firstFinalString = permutator.applySwitch(processedLeftSide);
-	        
-	        String secondProcessedRightSide = processRightSide(firstFinalString, pKey1);
-	        String secondProcessedLeftSide = processLeftSide(firstFinalString, secondProcessedRightSide);
-	        
-	        String decryptText = permutator.ipReverse(secondProcessedLeftSide);
+	        String decryptText = permutador.ipReverse(processarEsquerda2);
 	        return decryptText;
 	    }
-	    
+
 	    public String encrypt(String pString, String pKey1, String pKey2)
 	    {
-	        String stringPermuted = permutator.ip(pString);
-	        String processedRightSide = processRightSide(stringPermuted, pKey1);
-	        String processedLeftSide = processLeftSide(stringPermuted, processedRightSide);
+	        String stringPermuted = permutador.ip(pString);
+	        String processedRightSide = processarLadoDireito(stringPermuted, pKey1);
+	        String processedLeftSide = processarLadoEsquerdo(stringPermuted, processedRightSide);
 	        
-	        String firstFinalString = permutator.applySwitch(processedLeftSide);
+	        String firstFinalString = permutador.trocarPosicao(processedLeftSide);
 	        
-	        String secondProcessedRightSide = processRightSide(firstFinalString, pKey2);
-	        String secondProcessedLeftSide = processLeftSide(firstFinalString, secondProcessedRightSide);
+	        String secondProcessedRightSide = processarLadoDireito(firstFinalString, pKey2);
+	        String secondProcessedLeftSide = processarLadoEsquerdo(firstFinalString, secondProcessedRightSide);
 	        
-	        String encryptText = permutator.ipReverse(secondProcessedLeftSide);
+	        String encryptText = permutador.ipReverse(secondProcessedLeftSide);
 	        return encryptText;
 	    }
-	   
-	    
-	    
-	    /**
-	     * Given the right substring from the given string, process this string.
-	     * @param pRightString
-	     * @param pKey
-	     * @return
-	     */
-	    public String processRightSide(String pString, String pKey)
+
+	    public String processarLadoDireito(String pString, String pKey)
 	    {
-	        String subStringRight = pString.substring(START_INDEX_SUBSTRING_RIGHT, END_INDEX_SUBSTRING_RIGHT);
+	        String subStringRight = pString.substring(DIREITA, DIREITA_FINAL);
+
+	        String permutarDireita = permutador.expandirPermutar(subStringRight);
+	        String permutarXOR = permutador.XOR(permutarDireita, pKey);
+
+	        String permutedXORRight = permutarXOR.substring(DIREITA, DIREITA_FINAL);
+	        String permutedXORLeft = permutarXOR.substring(ESQUERDA, ESQUERDA_FINAL);
+
+	        String s0 = permutador.aplicarSBox(permutedXORLeft, Permutador.S0_BOX);
+	        String s1 = permutador.aplicarSBox(permutedXORRight, Permutador.S1_BOX);
+
+	        String concatenar = s0.concat(s1);
+	        String resultado = permutador.permutarP4(concatenar);
 	        
-	        String permutedRight = permutator.expandPermute(subStringRight);
-	        String permutedXOR = permutator.applyXOR(permutedRight, pKey);
-	        
-	        String permutedXORRight = permutedXOR.substring(START_INDEX_SUBSTRING_RIGHT, END_INDEX_SUBSTRING_RIGHT);
-	        String permutedXORLeft = permutedXOR.substring(START_INDEX_SUBSTRING_LEFT, END_INDEX_SUBSTRING_LEFT);
-	        
-	        String s0BoxString = permutator.applyS0Box(permutedXORLeft);
-	        String s1BoxString = permutator.applyS1Box(permutedXORRight);
-	        
-	        String stringBoxesConcat = s0BoxString.concat(s1BoxString);
-	        String stringPermutP4 = permutator.permutP4(stringBoxesConcat);
-	        
-	        return stringPermutP4;
+	        return resultado;
 	    }
 
-	    public String processLeftSide(String pString, String processedRightSide)
+	    public String processarLadoEsquerdo(String pString, String processedRightSide)
 	    {
-	        String subStringLeft = pString.substring(START_INDEX_SUBSTRING_LEFT, END_INDEX_SUBSTRING_LEFT);
-	        String subStringRight = pString.substring(START_INDEX_SUBSTRING_RIGHT, END_INDEX_SUBSTRING_RIGHT);
-	        
-	        String permutBoxXOR = permutator.applyXOR(processedRightSide, subStringLeft);
-	        
-	        String stringConcat = permutBoxXOR.concat(subStringRight);
+	        String stringEsquerda = pString.substring(ESQUERDA, ESQUERDA_FINAL);
+	        String direita = pString.substring(DIREITA, DIREITA_FINAL);
 
-            return stringConcat;
+	        String permutarXOR = permutador.XOR(processedRightSide, stringEsquerda);
+
+	        String resultadoFinal = permutarXOR.concat(direita);
+
+            return resultadoFinal;
         }
 }

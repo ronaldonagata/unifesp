@@ -3,107 +3,79 @@ package util.encryptor;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * This class generates P10 Keys for S-Des algorithm
- * @author Ronaldo Nagata 
- *
- */
-public class KeyGenerator
+public class Chaves
 {
-
-    public static List<Integer> P08_LIST = Arrays.asList(5, 2, 6, 3, 7, 4, 9, 8);
-    public static List<Integer> P10_LIST = Arrays.asList(2, 4, 1, 6, 3, 9, 0, 8, 7, 5);
+    public static List<Integer> P08 = Arrays.asList(5, 2, 6, 3, 7, 4, 9, 8);
+    public static List<Integer> P10 = Arrays.asList(2, 4, 1, 6, 3, 9, 0, 8, 7, 5);
     
-    /**
-     * Makes a left bit rotation
-     * @param pString
-     *          String of bits to rotate
-     * @param times
-     *          The number of times that the bit must be shifted to left
-     * @return
-     *          The string of bits rotated
-     */
-    public String rotateLeft(String pString, int times)
+
+    public String rotacionarEsquerda(String pString, int times)
     {
-        String subStringLeft = pString.substring(0, 5);
-        String subStringRight = pString.substring(5, 10);
-        
-        //left part
-        String left = subStringLeft.substring(0, times);
-        String right = subStringLeft.substring(times, subStringLeft.length());
+        String stringEsquerda = pString.substring(0, 5);
+        String stringDireita = pString.substring(5, 10);
+
+        String esquerda = stringEsquerda.substring(0, times);
+        String direita = stringEsquerda.substring(times, stringEsquerda.length());
+
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(right).append(left);
-        String leftPart = stringBuilder.toString();
-        
-        //right part
-        String left2 = subStringRight.substring(0, times);
-        String right2 = subStringRight.substring(times, subStringRight.length());
-        StringBuilder stringBuilder2 = new StringBuilder();
-        stringBuilder2.append(right2).append(left2);
-        String rightPart = stringBuilder2.toString();
-        
+        stringBuilder.append(direita).append(esquerda);
+        String ladoEsquerdo = stringBuilder.toString();
+
+        String ladoEsquerdo2 = stringDireita.substring(0, times);
+        String direita2 = stringDireita.substring(times, stringDireita.length());
+
+        StringBuilder st = new StringBuilder();
+        st.append(direita2).append(ladoEsquerdo2);
+        String rightPart = st.toString();
+
         StringBuilder stringBuilderConcat = new StringBuilder();
-        stringBuilderConcat.append(leftPart).append(rightPart);
+        stringBuilderConcat.append(ladoEsquerdo).append(rightPart);
         return stringBuilderConcat.toString();
     }
 
-    /**
-     * Generates P10 Key1 for S-Des algorithm
-     * @param pString
-     *          The given string to make P10 
-     * @return
-     *          Key1 for S-Des algorithm 
-     */
-    public String generateK1(String pString)
+    public String gerarChaveK1(String pString)
     {
-        StringBuilder permuted = new StringBuilder();
-        for(Integer integer : P10_LIST)
+        StringBuilder permutar = new StringBuilder();
+        for(Integer i : P10)
         {
-            char value = pString.charAt(integer);
-            permuted.append(value);
+            char value = pString.charAt(i);
+            permutar.append(value);
         }
-        
-        String concatKey = rotateLeft(permuted.toString(), 1);
-        
-        StringBuilder stringBuilderFinal = new StringBuilder();
-        
-        for(Integer integer : P08_LIST)
+
+        String stringRotacao = rotacionarEsquerda(permutar.toString(), 1);
+
+        StringBuilder chave = new StringBuilder();
+
+        for(Integer i : P08)
         {
-            char value = concatKey.charAt(integer);
-            stringBuilderFinal.append(value);
+            char value = stringRotacao.charAt(i);
+            chave.append(value);
         }
-        
-        return stringBuilderFinal.toString();
+
+        return chave.toString();
     }
-    
-    /**
-     * Generates P10 Key2 for S-Des Algorithm
-     * @param pString
-     *          The given string to make P10
-     * @return
-     *          Key2 for S-Des Algorithm 
-     */
-    public String generateK2(String pString)
+
+    public String gerarChaveK2(String pString)
     {
-        StringBuilder permuted = new StringBuilder();
-        for(Integer integer : P10_LIST)
+        StringBuilder permutar = new StringBuilder();
+        for(Integer integer : P10)
         {
             char value = pString.charAt(integer);
-            permuted.append(value);
+            permutar.append(value);
         }
-        
-        String concatKey = rotateLeft(permuted.toString(), 1);
-        
-        String concatKey2 = rotateLeft(concatKey, 2);
-        
+
+        String chaveDeConcatenacao = rotacionarEsquerda(permutar.toString(), 1);
+
+        String outraChave = rotacionarEsquerda(chaveDeConcatenacao, 2);
+
         StringBuilder stringBuilderFinal = new StringBuilder();
-        
-        for(Integer integer : P08_LIST)
+
+        for(Integer bit : P08)
         {
-            char value = concatKey2.charAt(integer);
+            char value = outraChave.charAt(bit);
             stringBuilderFinal.append(value);
         }
-        
+
         return stringBuilderFinal.toString();
     }
 }
