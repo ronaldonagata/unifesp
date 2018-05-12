@@ -152,7 +152,7 @@ void generateNextPopulation(int *pBoard, int *pNextBoard, int pLength, int pGene
         {
             for (j=1; j< pLength-1; j++)
             {
-                pNextBoard[pLength*i + j] = nextStateINJ(pBoard, i, j, pLength);
+                pNextBoard[pLength*i + j] = nextState(pBoard, i, j, pLength);
             }
         }
         
